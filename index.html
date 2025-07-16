@@ -199,7 +199,11 @@
 
                 const boxInfoDiv = document.createElement('div');
                 boxInfoDiv.classList.add('box-info');
-                boxInfoDiv.innerHTML = `<strong>${item.title}</strong><br>${item.location}<br>⭐ ${item.score} 👥 ${item.min_players}-${item.max_players} ⏰ ${item.min_playtime}-${item.max_playtime} min`;
+                if (item.score === 0 && item.min_players === 0 && item.max_players === 0 && item.min_playtime === 0 && item.max_playtime === 0 && item.weight === 0) {
+                    boxInfoDiv.innerHTML = `<strong>${item.title}</strong><br>${item.location}<br>⚠️`;
+                } else {
+                    boxInfoDiv.innerHTML = `<strong>${item.title}</strong><br>${item.location}<br>⭐ ${item.score} 👥 ${item.min_players}-${item.max_players} ⏰ ${item.min_playtime}-${item.max_playtime} min 🧠 ${'🧠'.repeat(Math.round(item.weight))}`;
+                }
                 boxDiv.appendChild(boxInfoDiv);
 
                 imageContainer.appendChild(boxDiv);
