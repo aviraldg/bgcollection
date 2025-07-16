@@ -541,14 +541,18 @@
 
         function renderDataTable() {
             const filteredData = filterBoardGames(boardgamesData);
+            function formatValue(value) {
+                return value === 0 ? '-' : value;
+            }
+
             const tableData = filteredData.map(item => [
                 item.title,
-                item.score,
-                item.min_players,
-                item.max_players,
-                item.min_playtime,
-                item.max_playtime,
-                item.weight,
+                formatValue(item.score),
+                formatValue(item.min_players),
+                formatValue(item.max_players),
+                formatValue(item.min_playtime),
+                formatValue(item.max_playtime),
+                formatValue(item.weight),
                 item.filename // Store filename to use for "View Image" button
             ]);
 
