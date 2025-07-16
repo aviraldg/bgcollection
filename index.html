@@ -125,6 +125,10 @@
     <div id="filter-container">
         <h2>Filters</h2>
         <div>
+            <label for="title-filter">Title:</label>
+            <input type="text" id="title-filter" placeholder="Search by title">
+        </div>
+        <div>
             <label for="score-min">Min Score:</label>
             <input type="range" id="score-min" min="0" max="10" step="0.1" value="0">
             <span id="score-min-value">0</span>
@@ -265,6 +269,7 @@
             const playtimeMax = parseInt(document.getElementById('playtime-max').value, 10) || 0;
             const complexityMin = parseFloat(document.getElementById('complexity-min').value);
             const complexityMax = parseFloat(document.getElementById('complexity-max').value);
+            const titleFilter = document.getElementById('title-filter').value.toLowerCase();
 
             const boxesForImage = boardgamesData.filter(item => {
                 if (item.filename !== filename) {
@@ -292,6 +297,10 @@
                 }
 
                 if (item.weight < complexityMin || item.weight > complexityMax) {
+                    return false;
+                }
+
+                if (titleFilter && !item.title.toLowerCase().includes(titleFilter)) {
                     return false;
                 }
 
@@ -375,6 +384,7 @@
             document.getElementById('playtime-max').value = 0;
             document.getElementById('complexity-min').value = 0;
             document.getElementById('complexity-max').value = 5;
+            document.getElementById('title-filter').value = '';
 
             updateSliderValue('score-min', 'score-min-value');
             updateSliderValue('score-max', 'score-max-value');
@@ -384,9 +394,11 @@
             saveFilters();
 
             const selectedFilename = imageSelector.value;
-            if (selectedFilename) {
+            if (selectedFilename && !globalSearchCheckbox.checked) {
                 displayBoundingBoxes(selectedFilename);
                 updateDisplayMode();
+            } else if (globalSearchCheckbox.checked) {
+                renderDataTable();
             }
         });
 
@@ -400,6 +412,7 @@
                 playtimeMax: document.getElementById('playtime-max').value,
                 complexityMin: document.getElementById('complexity-min').value,
                 complexityMax: document.getElementById('complexity-max').value,
+                titleFilter: document.getElementById('title-filter').value
             };
             localStorage.setItem('filters', JSON.stringify(filters));
         }
@@ -415,6 +428,7 @@
                 document.getElementById('playtime-max').value = filters.playtimeMax;
                 document.getElementById('complexity-min').value = filters.complexityMin;
                 document.getElementById('complexity-max').value = filters.complexityMax;
+                document.getElementById('title-filter').value = filters.titleFilter || '';
 
                 updateSliderValue('score-min', 'score-min-value');
                 updateSliderValue('score-max', 'score-max-value');
@@ -425,13 +439,15 @@
 
         loadFilters();
 
-        ['score-min', 'score-max', 'players-min', 'players-max', 'playtime-min', 'playtime-max', 'complexity-min', 'complexity-max'].forEach(id => {
+        ['score-min', 'score-max', 'players-min', 'players-max', 'playtime-min', 'playtime-max', 'complexity-min', 'complexity-max', 'title-filter'].forEach(id => {
             document.getElementById(id).addEventListener('change', () => {
                 saveFilters();
                 const selectedFilename = imageSelector.value;
-                if (selectedFilename) {
+                if (selectedFilename && !globalSearchCheckbox.checked) {
                     displayBoundingBoxes(selectedFilename);
                     updateDisplayMode();
+                } else if (globalSearchCheckbox.checked) {
+                    renderDataTable();
                 }
             });
         });
@@ -507,6 +523,7 @@
             const playtimeMax = parseInt(document.getElementById('playtime-max').value, 10) || 0;
             const complexityMin = parseFloat(document.getElementById('complexity-min').value);
             const complexityMax = parseFloat(document.getElementById('complexity-max').value);
+            const titleFilter = document.getElementById('title-filter').value.toLowerCase();
 
             return data.filter(item => {
                 if (item.score < scoreMin || item.score > scoreMax) {
@@ -532,6 +549,11 @@
                 if (item.weight < complexityMin || item.weight > complexityMax) {
                     return false;
                 }
+
+                if (titleFilter && !item.title.toLowerCase().includes(titleFilter)) {
+                    return false;
+                }
+
                 return true;
             });
         }
