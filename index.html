@@ -99,7 +99,7 @@
         const alwaysDisplayInfoCheckbox = document.getElementById('alwaysDisplayInfo');
 
         // Fetch the JSON data
-        fetch('boardgames2.json')
+        fetch('boardgames.json')
             .then(response => response.json())
             .then(data => {
                 boardgamesData = data;
@@ -196,6 +196,8 @@
                 boxDiv.addEventListener('click', () => {
                     if (item.url) {
                         window.open(item.url, '_blank');
+                    } else {
+                        window.open('https://github.com/aviraldg/bgcollection/blob/master/boardgames.json', '_blank');
                     }
                 });
 
