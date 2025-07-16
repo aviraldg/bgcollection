@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Board Game Collection</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -114,6 +117,11 @@
         <label for="alwaysDisplayInfo">Always display information</label>
     </div>
 
+    <div style="margin-bottom: 10px;">
+        <input type="checkbox" id="global-search">
+        <label for="global-search">Global Search</label>
+    </div>
+
     <div id="filter-container">
         <h2>Filters</h2>
         <div>
@@ -158,6 +166,23 @@
     <div id="image-container">
         <img id="boardgame-image" src="" alt="Board Game Collection">
         <div id="info-box"></div>
+    </div>
+
+    <div id="table-container" style="display: none;">
+        <table id="boardgames-table" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Score</th>
+                    <th>Min Players</th>
+                    <th>Max Players</th>
+                    <th>Min Playtime</th>
+                    <th>Max Playtime</th>
+                    <th>Complexity</th>
+                    <th></th>
+                </tr>
+            </thead>
+        </table>
     </div>
 
     <script type="text/javascript">
@@ -449,6 +474,206 @@
             }
             updateDisplayMode(); // Add this line
         });
+
+        const globalSearchCheckbox = document.getElementById('global-search');
+        const tableContainer = document.getElementById('table-container');
+
+        globalSearchCheckbox.addEventListener('change', () => {
+            if (globalSearchCheckbox.checked) {
+                imageContainer.style.display = 'none';
+                tableContainer.style.display = 'block';
+                renderDataTable();
+            } else {
+                imageContainer.style.display = 'block';
+                tableContainer.style.display = 'none';
+                // If an image is selected, display its bounding boxes
+                const selectedFilename = imageSelector.value;
+                if (selectedFilename) {
+                    boardgameImage.src = selectedFilename;
+                    boardgameImage.onload = () => {
+                        displayBoundingBoxes(selectedFilename);
+                        updateDisplayMode();
+                    };
+                }
+            }
+        });
+
+        function filterBoardGames(data) {
+            const scoreMin = parseFloat(document.getElementById('score-min').value);
+            const scoreMax = parseFloat(document.getElementById('score-max').value);
+            const playersMin = parseInt(document.getElementById('players-min').value, 10) || 0;
+            const playersMax = parseInt(document.getElementById('players-max').value, 10) || 0;
+            const playtimeMin = parseInt(document.getElementById('playtime-min').value, 10) || 0;
+            const playtimeMax = parseInt(document.getElementById('playtime-max').value, 10) || 0;
+            const complexityMin = parseFloat(document.getElementById('complexity-min').value);
+            const complexityMax = parseFloat(document.getElementById('complexity-max').value);
+
+            return data.filter(item => {
+                if (item.score < scoreMin || item.score > scoreMax) {
+                    return false;
+                }
+
+                if (playersMin > 0 && item.min_players < playersMin) {
+                    return false;
+                }
+
+                if (playersMax > 0 && item.max_players > playersMax) {
+                    return false;
+                }
+
+                if (playtimeMin > 0 && item.min_playtime < playtimeMin) {
+                    return false;
+                }
+
+                if (playtimeMax > 0 && item.max_playtime > playtimeMax) {
+                    return false;
+                }
+
+                if (item.weight < complexityMin || item.weight > complexityMax) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        let dataTableInitialized = false;
+        let dataTableInstance;
+
+        function renderDataTable() {
+            const filteredData = filterBoardGames(boardgamesData);
+            const tableData = filteredData.map(item => [
+                item.title,
+                item.score,
+                item.min_players,
+                item.max_players,
+                item.min_playtime,
+                item.max_playtime,
+                item.weight,
+                item.filename // Store filename to use for "View Image" button
+            ]);
+
+            if (dataTableInitialized) {
+                dataTableInstance.clear().rows.add(tableData).draw();
+            } else {
+                dataTableInstance = $('#boardgames-table').DataTable({
+                    data: tableData,
+                    columns: [
+                        { title: "Title" },
+                        { title: "Score" },
+                        { title: "Min Players" },
+                        { title: "Max Players" },
+                        { title: "Min Playtime" },
+                        { title: "Max Playtime" },
+                        { title: "Complexity" },
+                        {
+                            title: "",
+                            render: function (data, type, row) {
+                                // data here is the filename
+                                return `<button class="view-image-btn" data-filename="${data}">View Image</button>`;
+                            }
+                        }
+                    ],
+                    createdRow: function (row, data, dataIndex) {
+                        // Add the filename as a data attribute to the row for easier access
+                        $(row).attr('data-filename', data[7]);
+                    }
+                });
+                dataTableInitialized = true;
+
+                $('#boardgames-table tbody').on('click', '.view-image-btn', function () {
+                    const filenameToSelect = $(this).data('filename');
+                    imageSelector.value = filenameToSelect;
+                    imageSelector.dispatchEvent(new Event('change')); // Trigger change event
+                    globalSearchCheckbox.checked = false;
+                    globalSearchCheckbox.dispatchEvent(new Event('change')); // Trigger change event
+                });
+            }
+        }
+
+        // Modify filter change listeners to re-render the table if global search is active
+        ['score-min', 'score-max', 'players-min', 'players-max', 'playtime-min', 'playtime-max', 'complexity-min', 'complexity-max'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                saveFilters();
+                const selectedFilename = imageSelector.value;
+                if (selectedFilename && !globalSearchCheckbox.checked) {
+                    displayBoundingBoxes(selectedFilename);
+                    updateDisplayMode();
+                } else if (globalSearchCheckbox.checked) {
+                    renderDataTable();
+                }
+            });
+        });
+
+        // Modify reset filters to re-render the table if global search is active
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('score-min').value = 0;
+            document.getElementById('score-max').value = 10;
+            document.getElementById('players-min').value = 0;
+            document.getElementById('players-max').value = 0;
+            document.getElementById('playtime-min').value = 0;
+            document.getElementById('playtime-max').value = 0;
+            document.getElementById('complexity-min').value = 0;
+            document.getElementById('complexity-max').value = 5;
+
+            updateSliderValue('score-min', 'score-min-value');
+            updateSliderValue('score-max', 'score-max-value');
+            updateSliderValue('complexity-min', 'complexity-min-value');
+            updateSliderValue('complexity-max', 'complexity-max-value');
+
+            saveFilters();
+
+            const selectedFilename = imageSelector.value;
+            if (selectedFilename && !globalSearchCheckbox.checked) {
+                displayBoundingBoxes(selectedFilename);
+                updateDisplayMode();
+            } else if (globalSearchCheckbox.checked) {
+                renderDataTable();
+            }
+        });
+
+        // Initial state check on load
+        function restoreStateFromLocalStorage() {
+            const savedImage = localStorage.getItem('selectedImage');
+            if (savedImage) {
+                imageSelector.value = savedImage;
+                // Only display image if global search is not checked
+                if (!globalSearchCheckbox.checked) {
+                    boardgameImage.src = savedImage;
+                    boardgameImage.style.display = 'block';
+                    boardgameImage.onload = () => {
+                        displayBoundingBoxes(savedImage);
+                        updateDisplayMode();
+                    };
+                }
+            } else {
+                boardgameImage.style.display = 'none';
+            }
+
+            const savedAlwaysDisplayInfo = localStorage.getItem('alwaysDisplayInfo');
+            if (savedAlwaysDisplayInfo !== null) {
+                alwaysDisplayInfoCheckbox.checked = (savedAlwaysDisplayInfo === 'true');
+            }
+            updateDisplayMode(); // Ensure display mode is updated on page load
+
+            // Check global search state from local storage or default
+            const savedGlobalSearch = localStorage.getItem('globalSearchChecked');
+            if (savedGlobalSearch !== null) {
+                globalSearchCheckbox.checked = (savedGlobalSearch === 'true');
+            }
+            // Trigger change event to set initial display state
+            globalSearchCheckbox.dispatchEvent(new Event('change'));
+        }
+
+        // Save global search state to local storage
+        globalSearchCheckbox.addEventListener('change', () => {
+            localStorage.setItem('globalSearchChecked', globalSearchCheckbox.checked);
+        });
+
+        // Ensure initial rendering of table if global search is checked on load
+        document.addEventListener('DOMContentLoaded', () => {
+            restoreStateFromLocalStorage();
+        });
+    </script>
     </script>
 </body>
 </html>
