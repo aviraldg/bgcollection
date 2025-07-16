@@ -66,6 +66,37 @@
             z-index: 1000;
             pointer-events: none; /* Allow mouse events to pass through to the bounding box */
         }
+        #filter-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: white;
+            max-width: 90%;
+        }
+
+        #filter-container h2 {
+            margin-top: 0;
+        }
+
+        #filter-container div {
+            margin-bottom: 10px;
+        }
+
+        #filter-container label {
+            display: inline-block;
+            width: 150px;
+        }
+
+        #filter-container input[type="range"] {
+            width: 200px;
+        }
+
+        #filter-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -81,6 +112,47 @@
     <div style="margin-bottom: 10px;">
         <input type="checkbox" id="alwaysDisplayInfo" checked>
         <label for="alwaysDisplayInfo">Always display information</label>
+    </div>
+
+    <div id="filter-container">
+        <h2>Filters</h2>
+        <div>
+            <label for="score-min">Min Score:</label>
+            <input type="range" id="score-min" min="0" max="10" step="0.1" value="0">
+            <span id="score-min-value">0</span>
+        </div>
+        <div>
+            <label for="score-max">Max Score:</label>
+            <input type="range" id="score-max" min="0" max="10" step="0.1" value="10">
+            <span id="score-max-value">10</span>
+        </div>
+        <div>
+            <label for="players-min">Min Players:</label>
+            <input type="number" id="players-min" min="0" value="0">
+        </div>
+        <div>
+            <label for="players-max">Max Players:</label>
+            <input type="number" id="players-max" min="0" value="0">
+        </div>
+        <div>
+            <label for="playtime-min">Min Playtime (mins):</label>
+            <input type="number" id="playtime-min" min="0" value="0">
+        </div>
+        <div>
+            <label for="playtime-max">Max Playtime (mins):</label>
+            <input type="number" id="playtime-max" min="0" value="0">
+        </div>
+        <div>
+            <label for="complexity-min">Min Complexity:</label>
+            <input type="range" id="complexity-min" min="0" max="5" step="0.1" value="0">
+            <span id="complexity-min-value">0</span>
+        </div>
+        <div>
+            <label for="complexity-max">Max Complexity:</label>
+            <input type="range" id="complexity-max" min="0" max="5" step="0.1" value="5">
+            <span id="complexity-max-value">5</span>
+        </div>
+        <button id="reset-filters">Reset Filters</button>
     </div>
 
     <div id="image-container">
@@ -160,7 +232,46 @@
             const actualImageScaleX = displayWidth / 1024; // Assuming original image width is 1024px
             const actualImageScaleY = displayHeight / 1024; // Assuming original image height is 1024px
 
-            const boxesForImage = boardgamesData.filter(item => item.filename === filename);
+            const scoreMin = parseFloat(document.getElementById('score-min').value);
+            const scoreMax = parseFloat(document.getElementById('score-max').value);
+            const playersMin = parseInt(document.getElementById('players-min').value, 10) || 0;
+            const playersMax = parseInt(document.getElementById('players-max').value, 10) || 0;
+            const playtimeMin = parseInt(document.getElementById('playtime-min').value, 10) || 0;
+            const playtimeMax = parseInt(document.getElementById('playtime-max').value, 10) || 0;
+            const complexityMin = parseFloat(document.getElementById('complexity-min').value);
+            const complexityMax = parseFloat(document.getElementById('complexity-max').value);
+
+            const boxesForImage = boardgamesData.filter(item => {
+                if (item.filename !== filename) {
+                    return false;
+                }
+
+                if (item.score < scoreMin || item.score > scoreMax) {
+                    return false;
+                }
+
+                if (playersMin > 0 && item.min_players < playersMin) {
+                    return false;
+                }
+
+                if (playersMax > 0 && item.max_players > playersMax) {
+                    return false;
+                }
+
+                if (playtimeMin > 0 && item.min_playtime < playtimeMin) {
+                    return false;
+                }
+
+                if (playtimeMax > 0 && item.max_playtime > playtimeMax) {
+                    return false;
+                }
+
+                if (item.weight < complexityMin || item.weight > complexityMax) {
+                    return false;
+                }
+
+                return true;
+            });
 
             boxesForImage.forEach(item => {
                 const [y1, x1, y2, x2] = item.box_2d;
@@ -213,6 +324,92 @@
                 imageContainer.appendChild(boxDiv);
             });
         }
+
+        
+
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const value = document.getElementById(valueId);
+            value.textContent = slider.value;
+            slider.addEventListener('input', () => {
+                value.textContent = slider.value;
+            });
+        }
+
+        updateSliderValue('score-min', 'score-min-value');
+        updateSliderValue('score-max', 'score-max-value');
+        updateSliderValue('complexity-min', 'complexity-min-value');
+        updateSliderValue('complexity-max', 'complexity-max-value');
+
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('score-min').value = 0;
+            document.getElementById('score-max').value = 10;
+            document.getElementById('players-min').value = 0;
+            document.getElementById('players-max').value = 0;
+            document.getElementById('playtime-min').value = 0;
+            document.getElementById('playtime-max').value = 0;
+            document.getElementById('complexity-min').value = 0;
+            document.getElementById('complexity-max').value = 5;
+
+            updateSliderValue('score-min', 'score-min-value');
+            updateSliderValue('score-max', 'score-max-value');
+            updateSliderValue('complexity-min', 'complexity-min-value');
+            updateSliderValue('complexity-max', 'complexity-max-value');
+
+            saveFilters();
+
+            const selectedFilename = imageSelector.value;
+            if (selectedFilename) {
+                displayBoundingBoxes(selectedFilename);
+                updateDisplayMode();
+            }
+        });
+
+        function saveFilters() {
+            const filters = {
+                scoreMin: document.getElementById('score-min').value,
+                scoreMax: document.getElementById('score-max').value,
+                playersMin: document.getElementById('players-min').value,
+                playersMax: document.getElementById('players-max').value,
+                playtimeMin: document.getElementById('playtime-min').value,
+                playtimeMax: document.getElementById('playtime-max').value,
+                complexityMin: document.getElementById('complexity-min').value,
+                complexityMax: document.getElementById('complexity-max').value,
+            };
+            localStorage.setItem('filters', JSON.stringify(filters));
+        }
+
+        function loadFilters() {
+            const filters = JSON.parse(localStorage.getItem('filters'));
+            if (filters) {
+                document.getElementById('score-min').value = filters.scoreMin;
+                document.getElementById('score-max').value = filters.scoreMax;
+                document.getElementById('players-min').value = filters.playersMin;
+                document.getElementById('players-max').value = filters.playersMax;
+                document.getElementById('playtime-min').value = filters.playtimeMin;
+                document.getElementById('playtime-max').value = filters.playtimeMax;
+                document.getElementById('complexity-min').value = filters.complexityMin;
+                document.getElementById('complexity-max').value = filters.complexityMax;
+
+                updateSliderValue('score-min', 'score-min-value');
+                updateSliderValue('score-max', 'score-max-value');
+                updateSliderValue('complexity-min', 'complexity-min-value');
+                updateSliderValue('complexity-max', 'complexity-max-value');
+            }
+        }
+
+        loadFilters();
+
+        ['score-min', 'score-max', 'players-min', 'players-max', 'playtime-min', 'playtime-max', 'complexity-min', 'complexity-max'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                saveFilters();
+                const selectedFilename = imageSelector.value;
+                if (selectedFilename) {
+                    displayBoundingBoxes(selectedFilename);
+                    updateDisplayMode();
+                }
+            });
+        });
 
         
 
