@@ -192,6 +192,7 @@
     <script type="text/javascript">
         console.log("Script started."); // Added for debugging
         let boardgamesData = [];
+        let imageDescriptions = {}; // New variable to store image descriptions
         const imageSelector = document.getElementById('image-selector');
         const boardgameImage = document.getElementById('boardgame-image');
         const imageContainer = document.getElementById('image-container');
@@ -204,19 +205,26 @@
             .then(response => response.json())
             .then(data => {
                 boardgamesData = data;
-                console.log('Fetched boardgamesData:', boardgamesData); // Add this line
-                populateImageSelector(data);
+                console.log('Fetched boardgamesData.');
+                // Fetch image descriptions after boardgamesData is loaded
+                return fetch('image_descriptions.json');
+            })
+            .then(response => response.json())
+            .then(data => {
+                imageDescriptions = data;
+                console.log('Fetched imageDescriptions.');
+                populateImageSelector(boardgamesData);
                 restoreStateFromLocalStorage();
             })
-            .catch(error => console.error('Error fetching boardgames data:', error));
+            .catch(error => console.error('Error fetching data:', error));
 
         function populateImageSelector(data) {
             const uniqueFilenames = [...new Set(data.map(item => item.filename))];
-            console.log('Unique filenames:', uniqueFilenames); // Add this line
+            console.log('Unique filenames processed.');
             uniqueFilenames.forEach(filename => {
                 const option = document.createElement('option');
                 option.value = filename;
-                option.textContent = filename;
+                option.textContent = imageDescriptions[filename] || filename; // Use description if available, otherwise filename
                 imageSelector.appendChild(option);
             });
         }
