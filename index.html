@@ -79,7 +79,7 @@
     
 
     <div style="margin-bottom: 10px;">
-        <input type="checkbox" id="alwaysDisplayInfo">
+        <input type="checkbox" id="alwaysDisplayInfo" checked>
         <label for="alwaysDisplayInfo">Always display information</label>
     </div>
 
@@ -124,12 +124,14 @@
             const selectedFilename = event.target.value;
             localStorage.setItem('selectedImage', selectedFilename);
             if (selectedFilename) {
+                boardgameImage.style.display = 'block';
                 boardgameImage.src = selectedFilename;
                 boardgameImage.onload = () => {
                     displayBoundingBoxes(selectedFilename);
                     updateDisplayMode(); // Add this line
                 };
             } else {
+                boardgameImage.style.display = 'none';
                 boardgameImage.src = '';
                 clearBoundingBoxes();
             }
@@ -225,10 +227,13 @@
             if (savedImage) {
                 imageSelector.value = savedImage;
                 boardgameImage.src = savedImage;
+                boardgameImage.style.display = 'block';
                 boardgameImage.onload = () => {
                     displayBoundingBoxes(savedImage);
                     updateDisplayMode(); // Call updateDisplayMode after boxes are displayed
                 };
+            } else {
+                boardgameImage.style.display = 'none';
             }
 
             const savedAlwaysDisplayInfo = localStorage.getItem('alwaysDisplayInfo');
