@@ -498,10 +498,14 @@
             if (globalSearchCheckbox.checked) {
                 imageContainer.style.display = 'none';
                 tableContainer.style.display = 'block';
+                imageSelector.disabled = true;
+                alwaysDisplayInfoCheckbox.disabled = true;
                 renderDataTable();
             } else {
                 imageContainer.style.display = 'block';
                 tableContainer.style.display = 'none';
+                imageSelector.disabled = false;
+                alwaysDisplayInfoCheckbox.disabled = false;
                 // If an image is selected, display its bounding boxes
                 const selectedFilename = imageSelector.value;
                 if (selectedFilename) {
@@ -605,7 +609,7 @@
                             title: "",
                             render: function (data, type, row) {
                                 // data here is the filename
-                                return `<button class="view-image-btn" data-filename="${data}">View Image</button>`;
+                                return `<button class="view-image-btn" data-filename="${data}" data-title="${row[0]}">Find on Shelf</button>`;
                             }
                         }
                     ],
@@ -618,10 +622,15 @@
 
                 $('#boardgames-table tbody').on('click', '.view-image-btn', function () {
                     const filenameToSelect = $(this).data('filename');
+                    const titleToFilter = $(this).data('title');
+
                     imageSelector.value = filenameToSelect;
                     imageSelector.dispatchEvent(new Event('change')); // Trigger change event
                     globalSearchCheckbox.checked = false;
                     globalSearchCheckbox.dispatchEvent(new Event('change')); // Trigger change event
+
+                    document.getElementById('title-filter').value = titleToFilter;
+                    document.getElementById('title-filter').dispatchEvent(new Event('change')); // Trigger change event for title filter
                 });
             }
         }
