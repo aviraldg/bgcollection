@@ -558,7 +558,17 @@
                 dataTableInstance = $('#boardgames-table').DataTable({
                     data: tableData,
                     columns: [
-                        { title: "Title" },
+                        { 
+                            title: "Title",
+                            render: function (data, type, row) {
+                                const item = boardgamesData.find(bg => bg.title === data); // Find the original item
+                                if (item && item.url) {
+                                    return `<a href="${item.url}" target="_blank">${data}</a>`;
+                                } else {
+                                    return `<a href="https://github.com/aviraldg/bgcollection/blob/master/boardgames.json" target="_blank">${data}</a>`;
+                                }
+                            }
+                        },
                         { title: "Score" },
                         { title: "Min Players" },
                         { title: "Max Players" },
