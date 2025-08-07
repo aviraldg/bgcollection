@@ -1,0 +1,23 @@
+[
+    {
+        "image_path": "PXL_20250715_164139298.jpg",
+        "expected_games": {
+            "games": [
+                {
+                    "box_2d": [0.0, 0.52, 0.1, 0.7],
+                    "title": "Catan",
+                    "description": "A red box with the word CATAN in white letters.",
+                    "location": "Top shelf, right side.",
+                    "filename": "PXL_20250715_164139298.jpg"
+                },
+                {
+                    "box_2d": [0.1, 0.2, 0.25, 0.4],
+                    "title": "Daybreak",
+                    "description": "A light blue and orange box with the word DAYBREAK in large white letters.",
+                    "location": "Second shelf from top, left side.",
+                    "filename": "PXL_20250715_164139298.jpg"
+                }
+            ]
+        }
+    }
+]
