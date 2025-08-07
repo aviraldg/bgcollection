@@ -1,6 +1,6 @@
 import json
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
 
 from update_boardgames import (
     read_boardgames_data,
@@ -52,7 +52,7 @@ class TestUpdateBoardgames(unittest.TestCase):
             self.assertFalse(result)
             mock_file.assert_called_once_with("dummy_path.json", "w")
 
-    @patch("update_boardgames.get_bgg_game_details")
+    @patch("bgg_api.BggApi.get_bgg_game_details")
     def test_update_boardgames_data_success(self, mock_get_details):
         """Test updating board games data successfully."""
         mock_get_details.return_value = {
@@ -66,13 +66,15 @@ class TestUpdateBoardgames(unittest.TestCase):
             "weight": 3.5,
         }
         boardgames_data = [{"title": "Game 1"}]
-        updated_count, updated_data = update_boardgames_data(boardgames_data)
+        bgg_api = MagicMock()
+        bgg_api.get_bgg_game_details.return_value = mock_get_details.return_value
+        updated_count, updated_data = update_boardgames_data(boardgames_data, bgg_api)
         self.assertEqual(updated_count, 1)
         self.assertEqual(len(updated_data), 1)
         self.assertEqual(updated_data[0]["rank"], 1)
-        mock_get_details.assert_called_once_with("Game 1")
+        bgg_api.get_bgg_game_details.assert_called_once_with("Game 1")
 
-    @patch("update_boardgames.get_bgg_game_details")
+    @patch("bgg_api.BggApi.get_bgg_game_details")
     def test_update_boardgames_data_no_update_needed(self, mock_get_details):
         """Test that no update is performed if data is present."""
         boardgames_data = [
@@ -88,28 +90,32 @@ class TestUpdateBoardgames(unittest.TestCase):
                 "weight": 3.5,
             }
         ]
-        updated_count, updated_data = update_boardgames_data(boardgames_data)
+        bgg_api = MagicMock()
+        updated_count, updated_data = update_boardgames_data(boardgames_data, bgg_api)
         self.assertEqual(updated_count, 0)
         self.assertEqual(len(updated_data), 1)
-        mock_get_details.assert_not_called()
+        bgg_api.get_bgg_game_details.assert_not_called()
 
-    @patch("update_boardgames.get_bgg_game_details")
+    @patch("bgg_api.BggApi.get_bgg_game_details")
     def test_update_boardgames_data_api_failure(self, mock_get_details):
         """Test handling of BGG API failure."""
         mock_get_details.return_value = None
         boardgames_data = [{"title": "Game 1"}]
-        updated_count, updated_data = update_boardgames_data(boardgames_data)
+        bgg_api = MagicMock()
+        bgg_api.get_bgg_game_details.return_value = None
+        updated_count, updated_data = update_boardgames_data(boardgames_data, bgg_api)
         self.assertEqual(updated_count, 0)
         self.assertEqual(len(updated_data), 1)
         self.assertEqual(updated_data[0]["rank"], "Not Found")
-        self.assertEqual(mock_get_details.call_count, 3)
+        self.assertEqual(bgg_api.get_bgg_game_details.call_count, 3)
 
 
     @patch("update_boardgames.write_boardgames_data")
     @patch("update_boardgames.update_boardgames_data")
     @patch("update_boardgames.read_boardgames_data")
+    @patch("update_boardgames.BggApi")
     def test_main_success(
-        self, mock_read, mock_update, mock_write
+        self, mock_bgg_api, mock_read, mock_update, mock_write
     ):
         """Test the main function with successful execution."""
         mock_read.return_value = [{"title": "Game 1"}]
@@ -121,7 +127,7 @@ class TestUpdateBoardgames(unittest.TestCase):
         main("dummy_path.json")
 
         mock_read.assert_called_once_with("dummy_path.json")
-        mock_update.assert_called_once_with([{"title": "Game 1"}])
+        mock_update.assert_called_once_with([{"title": "Game 1"}], mock_bgg_api.return_value)
         mock_write.assert_called_once_with("dummy_path.json", [{"title": "Game 1", "rank": 1}])
 
 

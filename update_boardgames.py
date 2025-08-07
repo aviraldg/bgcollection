@@ -2,20 +2,8 @@ import json
 import sys
 import time
 
-from bgg_api import get_bgg_game_details
-
-
-def read_boardgames_data(json_file_path):
-    """Reads board games data from a JSON file."""
-    try:
-        with open(json_file_path, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f"Error: File not found at {json_file_path}")
-        return None
-    except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from {json_file_path}")
-        return None
+from bgg_api import BggApi
+from file_utils import read_boardgames_data
 
 
 def write_boardgames_data(json_file_path, data):
@@ -29,7 +17,7 @@ def write_boardgames_data(json_file_path, data):
         return False
 
 
-def update_boardgames_data(boardgames_data):
+def update_boardgames_data(boardgames_data, bgg_api):
     """
     Updates board games data with BGG URL, rank, score, and other stats.
     """
@@ -45,7 +33,7 @@ def update_boardgames_data(boardgames_data):
             max_retries = 3
             details = None
             for attempt in range(max_retries):
-                details = get_bgg_game_details(title)
+                details = bgg_api.get_bgg_game_details(title)
                 if details:
                     game.update(details)
                     updated_count += 1
@@ -74,7 +62,8 @@ def main(json_file_path):
     if boardgames_data is None:
         return
 
-    updated_count, updated_data = update_boardgames_data(boardgames_data)
+    bgg_api = BggApi()
+    updated_count, updated_data = update_boardgames_data(boardgames_data, bgg_api)
 
     if updated_count > 0:
         if write_boardgames_data(json_file_path, updated_data):
