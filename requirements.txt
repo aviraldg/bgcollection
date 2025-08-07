@@ -2,3 +2,7 @@ requests
 selenium
 webdriver-manager
 ruff
+dspy-ai
+google-generativeai
+python-dotenv
+Pillow
