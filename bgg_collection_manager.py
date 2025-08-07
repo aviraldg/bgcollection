@@ -54,7 +54,7 @@ class BggCollectionManager:
                 if owned_status_link.is_displayed():
                     print(f"'{title}' is already in your collection as 'Owned'. Skipping.")
                     return
-            except:
+            except Exception:
                 pass  # Not found, proceed to add
 
             # Click "Add to Collection"

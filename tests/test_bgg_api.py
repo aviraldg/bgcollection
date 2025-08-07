@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch, MagicMock
-import xml.etree.ElementTree as ET
 
 from bgg_api import BggApi
 

@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from update_collection import update_bgg_collection
-from bgg_collection_manager import BggCollectionManager
 
 
 class TestUpdateCollection(unittest.TestCase):
