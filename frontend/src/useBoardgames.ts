@@ -10,9 +10,10 @@ export const useBoardgames = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const baseUrl = import.meta.env.BASE_URL;
         const [bgResponse, descResponse] = await Promise.all([
-          fetch('/boardgames.json'),
-          fetch('/image_descriptions.json')
+          fetch(`${baseUrl}boardgames.json`),
+          fetch(`${baseUrl}image_descriptions.json`)
         ]);
 
         if (!bgResponse.ok || !descResponse.ok) {
