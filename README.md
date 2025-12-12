@@ -14,47 +14,57 @@ This project helps you manage your board game collection. It provides scripts to
     cd bgcollection
     ```
 
-2.  **Create a virtual environment (optional but recommended):**
+2.  **Backend Setup (Python):**
     ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    pip install -r requirements.txt
     ```
 
-3.  **Install the dependencies:**
+3.  **Frontend Setup (React):**
     ```bash
-    pip install -r requirements.txt
+    cd frontend
+    npm install
     ```
 
 ## Usage
 
 ### Updating Board Game Data
 
-The `update_boardgames.py` script fetches the latest data for your board games from BGG. It reads the `boardgames.json` file, finds any games with missing information, and fetches the data from BGG.
+The `update_boardgames.py` script fetches the latest data for your board games from BGG. It reads and writes to the `boardgames.json` file. Since the frontend is now in `frontend/public`, target that file:
 
-To run the script:
 ```bash
-python update_boardgames.py boardgames.json
+# From root directory
+python update_boardgames.py frontend/public/boardgames.json
 ```
 
 ### Updating Your BGG Collection
 
-The `update_collection.py` script helps you add your board games to your collection on the BGG website. It uses Selenium to automate the process.
+The `update_collection.py` script helps you add your board games to your collection on the BGG website.
 
-To run the script:
 ```bash
 python update_collection.py
 ```
-The script will open a browser window and ask you to log in to your BGG account. After you log in, it will iterate through your `boardgames.json` file and add each game to your collection.
 
 ### Viewing Your Collection
 
-Open the `index.html` file in your browser to see an interactive view of your collection. You can filter your games by various criteria and see where they are located on your shelves.
+The collection is now a React application.
+
+**Development:**
+```bash
+cd frontend
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
+
+**Production / GitHub Pages:**
+The app is configured to deploy to GitHub Pages via GitHub Actions.
 
 ## Development
 
 ### Pre-commit Hooks
 
-This project uses `ruff` for linting and formatting. To automatically run `ruff` before each commit, you need to install the pre-commit hooks:
+This project uses `ruff` for linting and formatting Python code.
 
 1.  **Install pre-commit:**
     ```bash
@@ -66,11 +76,16 @@ This project uses `ruff` for linting and formatting. To automatically run `ruff`
     pre-commit install
     ```
 
-Now, `ruff` will run automatically on any changed files before you make a commit.
-
 ### Running Tests
 
-To run the unit tests, use the following command:
+**Python:**
 ```bash
 python -m unittest discover tests
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm test          # Unit tests
+npx playwright test # E2E tests
 ```
